@@ -24,7 +24,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with bootstrap_settings set to valid hash' do
-    let(:params) { { :bootstrap_settings => { 'rspec' => { 'line'  => 'testing242', 'match' => 'testing'  } } } }
+    let(:params) { { :bootstrap_settings => { 'rspec' => { 'line' => 'testing242', 'match' => 'testing' } } } }
 
     it { should have_file_line_resource_count(3) }
     it do
@@ -37,7 +37,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with puppetserver_settings set to valid hash' do
-    let(:params) { { :puppetserver_settings => { 'jruby-puppet.max-active-instances' => { 'value'  => '6' } } } }
+    let(:params) { { :puppetserver_settings => { 'jruby-puppet.max-active-instances' => { 'value' => '6' } } } }
 
     it { should have_puppetserver__config__hocon_resource_count(1) }
     it do
@@ -50,7 +50,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with webserver_settings set to valid hash' do
-    let(:params) { { :webserver_settings => { 'rspec' => { 'value'  => '242' } } } }
+    let(:params) { { :webserver_settings => { 'rspec' => { 'value' => '242' } } } }
 
     it { should have_puppetserver__config__hocon_resource_count(1) }
     it do
@@ -63,47 +63,45 @@ describe 'puppetserver::config' do
   end
 
   describe 'enable_ca' do
-    ['true',true].each do |value|
+    ['true', true].each do |value|
       context "as #{value}" do
         let(:params) { { :enable_ca => value } }
         it { should compile.with_all_deps }
-        it {
+        it do
           should contain_file_line('ca.certificate-authority-service').with({
             'line' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
           })
-        }
-        it {
+        end
+        it do
           should contain_file_line('ca.certificate-authority-disabled-service').with({
             'line' => '#puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
           })
-        }
+        end
       end
     end
 
-    ['false',false].each do |value|
+    ['false', false].each do |value|
       context "as #{value}" do
         let(:params) { { :enable_ca => value } }
         it { should compile.with_all_deps }
-        it {
+        it do
           should contain_file_line('ca.certificate-authority-service').with({
             'line' => '#puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
           })
-        }
-        it {
+        end
+        it do
           should contain_file_line('ca.certificate-authority-disabled-service').with({
             'line' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
           })
-        }
+        end
       end
     end
 
     context 'with invalid value' do
-      let (:params) {{ :enable_ca => 'not-a-boolean' }}
+      let(:params) { { :enable_ca => 'not-a-boolean' } }
 
       it 'should fail' do
-        expect {
-          should contain_class('puppetserver::config')
-        }.to raise_error(Puppet::Error, /Unknown type of boolean given/)
+        expect { should contain_class(subject) }.to raise_error(Puppet::Error, /Unknown type of boolean given/)
       end
     end
   end
@@ -197,5 +195,4 @@ describe 'puppetserver::config' do
       end # var[:name].each
     end # validations.sort.each
   end # describe 'variable type and content validations'
-
 end
