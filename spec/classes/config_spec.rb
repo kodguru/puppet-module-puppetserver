@@ -1,11 +1,18 @@
 require 'spec_helper'
 describe 'puppetserver::config' do
-  let(:facts) { { :puppetversion => '3.8.0' } }
+  let(:facts) do
+    {
+      :osfamily      => 'RedHat',
+      :puppetversion => '3.8.0',
+      :test          => nil, # used in hiera
+    }
+  end
 
   context 'with defaults for all parameters' do
     it { should compile.with_all_deps }
     it { should contain_class('puppetserver::config') }
     it { should have_file_line_resource_count(2) }
+    it { should have_puppetserver__config__java_arg_resource_count(0) }
     it { should have_puppetserver__config__hocon_resource_count(0) }
     it do
       should contain_file_line('ca.certificate-authority-service').with({
@@ -19,6 +26,38 @@ describe 'puppetserver::config' do
         'line'  => '#puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
         'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
         'path'  => '/etc/puppetserver/bootstrap.cfg',
+      })
+    end
+  end
+
+  context 'with enable_ca set to valid bool <false>' do
+    let(:params) { { :enable_ca => false } }
+
+    it { should have_file_line_resource_count(2) }
+    it do
+      should contain_file_line('ca.certificate-authority-service').with({
+        'line'  => '#puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
+        'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
+        'path'  => '/etc/puppetserver/bootstrap.cfg',
+      })
+    end
+    it do
+      should contain_file_line('ca.certificate-authority-disabled-service').with({
+        'line'  => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
+        'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
+        'path'  => '/etc/puppetserver/bootstrap.cfg',
+      })
+    end
+  end
+
+  context 'with java_args set to valid hash' do
+    let(:params) { { :java_args => { 'rspec' => { 'value' => 'value' } } } }
+
+    it { should have_puppetserver__config__java_arg_resource_count(1) }
+    it do
+      should contain_puppetserver__config__java_arg('rspec').with({
+        'value'  => 'value',
+        'notify' => 'Service[puppetserver]',
       })
     end
   end
@@ -59,50 +98,6 @@ describe 'puppetserver::config' do
         'path'   => '/etc/puppetserver/conf.d/webserver.conf',
         'value'  => '242',
       })
-    end
-  end
-
-  describe 'enable_ca' do
-    ['true', true].each do |value|
-      context "as #{value}" do
-        let(:params) { { :enable_ca => value } }
-        it { should compile.with_all_deps }
-        it do
-          should contain_file_line('ca.certificate-authority-service').with({
-            'line' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-          })
-        end
-        it do
-          should contain_file_line('ca.certificate-authority-disabled-service').with({
-            'line' => '#puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-          })
-        end
-      end
-    end
-
-    ['false', false].each do |value|
-      context "as #{value}" do
-        let(:params) { { :enable_ca => value } }
-        it { should compile.with_all_deps }
-        it do
-          should contain_file_line('ca.certificate-authority-service').with({
-            'line' => '#puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-          })
-        end
-        it do
-          should contain_file_line('ca.certificate-authority-disabled-service').with({
-            'line' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-          })
-        end
-      end
-    end
-
-    context 'with invalid value' do
-      let(:params) { { :enable_ca => 'not-a-boolean' } }
-
-      it 'should fail' do
-        expect { should contain_class(subject) }.to raise_error(Puppet::Error, /Unknown type of boolean given/)
-      end
     end
   end
 
@@ -156,21 +151,25 @@ describe 'puppetserver::config' do
     # set needed custom facts and variables
     let(:facts) do
       {
-        :puppetversion => '3.8.0'
+        :osfamily      => 'RedHat',
+        :puppetversion => '3.8.0',
+        :test          => nil, # used in hiera
       }
     end
-    let(:mandatory_params) do
-      {
-        #:param => 'value',
-      }
-    end
+    let(:mandatory_params) { {} }
 
     validations = {
       'boolean/stringified' => {
-        :name    => %w(bootstrap_settings_hiera_merge puppetserver_settings_hiera_merge webserver_settings_hiera_merge),
+        :name    => %w(enable_ca bootstrap_settings_hiera_merge puppetserver_settings_hiera_merge webserver_settings_hiera_merge),
         :valid   => [true, 'true', false, 'false'],
         :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42, nil],
-        :message => 'is not a boolean',
+        :message => '(Unknown type of boolean given|is not a boolean)',
+      },
+      'hash' => {
+        :name    => %w(bootstrap_settings java_args puppetserver_settings webserver_settings),
+        :valid   => [], # valid hashes are to complex to block test them here.
+        :invalid => ['string', 3, 2.42, %w(array), true, nil], # false can't be tested due to implementation
+        :message => 'is not a Hash',
       },
     }
 

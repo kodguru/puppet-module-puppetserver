@@ -1,6 +1,11 @@
 require 'spec_helper'
 describe 'puppetserver' do
-  let(:facts) { { :puppetversion => '3.8.0' } }
+  let(:facts) do
+    {
+      :puppetversion => '3.8.0',
+      :test          => nil, # used in hiera
+    }
+  end
 
   describe 'with defaults for all parameters' do
     it { should compile.with_all_deps }
@@ -67,18 +72,19 @@ describe 'puppetserver' do
 
   describe 'variable type and content validations' do
     # set needed custom facts and variables
-    let(:facts) { { :puppetversion => '3.8.0' } }
-    let(:mandatory_params) do
+    let(:facts) do
       {
-        #:param => 'value',
+        :puppetversion => '3.8.0',
+        :test          => nil, # used in hiera
       }
     end
+    let(:mandatory_params) { {} }
 
     validations = {
       'array/string' => {
         :name    => %w(package_name),
         :valid   => ['string', %w(array)],
-        :invalid => [{ 'ha' => 'sh' }, 3, 2.42, true, false],
+        :invalid => [{ 'ha' => 'sh' }, true, false], # integer & float can't be tested due to implementation
         :message => 'is not a string',
       },
       'boolean/stringified' => {
@@ -102,7 +108,7 @@ describe 'puppetserver' do
       'string' => {
         :name    => %w(service_name),
         :valid   => ['string'],
-        :invalid => [%w(array), { 'ha' => 'sh' }, 3, 2.42, true, false],
+        :invalid => [%w(array), { 'ha' => 'sh' }, true, false], # integer & float can't be tested due to implementation
         :message => 'is not a string',
       },
     }
