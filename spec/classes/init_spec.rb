@@ -15,7 +15,7 @@ describe 'puppetserver' do
     it do
       should contain_package('puppetserver').with({
         'ensure' => 'installed',
-        'before' => ['Class[Puppetserver::Config]'],
+        'before' => ['Service[puppetserver]', 'Class[Puppetserver::Config]'],
       })
     end
 
@@ -23,7 +23,6 @@ describe 'puppetserver' do
       should contain_service('puppetserver').with({
         'ensure'  => 'running',
         'enable'  => true,
-        'require' => 'Package[puppetserver]',
       })
     end
   end
@@ -39,7 +38,6 @@ describe 'puppetserver' do
     let(:params) { { :package_name => 'puppetserver_new' } }
     it { should compile.with_all_deps }
     it { should contain_package('puppetserver_new') }
-    it { should contain_service('puppetserver').with_require('Package[puppetserver_new]') }
   end
 
   describe 'with package_name set to valid array [\'pkg1\',\'pkg2\']' do
@@ -47,7 +45,6 @@ describe 'puppetserver' do
     it { should compile.with_all_deps }
     it { should contain_package('pkg1') }
     it { should contain_package('pkg2') }
-    it { should contain_service('puppetserver').with_require(['Package[pkg1]', 'Package[pkg2]']) }
   end
 
   describe 'with service_enable set to valid bool <false>' do
@@ -68,6 +65,7 @@ describe 'puppetserver' do
     it { should compile.with_all_deps }
     it { should contain_service('puppetsrv') }
     it { should contain_class('puppetserver::config').with_notify(['Service[puppetsrv]']) }
+    it { should contain_package('puppetserver').with_before(['Service[puppetsrv]', 'Class[Puppetserver::Config]']) }
   end
 
   describe 'variable type and content validations' do
@@ -84,8 +82,8 @@ describe 'puppetserver' do
       'array/string' => {
         :name    => %w(package_name),
         :valid   => ['string', %w(array)],
-        :invalid => [{ 'ha' => 'sh' }, true, false], # integer & float can't be tested due to implementation
-        :message => 'is not a string',
+        :invalid => [{ 'ha' => 'sh' }, 3, 2.42, true, false],
+        :message => 'is not an array nor a string',
       },
       'boolean/stringified' => {
         :name    => %w(service_enable),
@@ -97,18 +95,18 @@ describe 'puppetserver' do
         :name    => %w(package_ensure),
         :valid   => %w(installed present absent),
         :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
-        :message => '', # should get a helpfull error message
+        :message => 'package_ensure must be one of <installed>, <present>, or <absent>',
       },
       'regex service_ensure' => {
         :name    => %w(service_ensure),
         :valid   => %w(running stopped),
         :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
-        :message => '', # should get a helpfull error message
+        :message => 'service_ensure must be one of <running> or <stopped>',
       },
       'string' => {
         :name    => %w(service_name),
         :valid   => ['string'],
-        :invalid => [%w(array), { 'ha' => 'sh' }, true, false], # integer & float can't be tested due to implementation
+        :invalid => [%w(array), { 'ha' => 'sh' }, 3, 2.42, true, false],
         :message => 'is not a string',
       },
     }
