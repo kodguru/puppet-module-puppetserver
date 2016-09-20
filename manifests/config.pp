@@ -30,22 +30,21 @@ class puppetserver::config(
     default:        { fail('puppetserver::webserver_settings_hiera_merge is not a boolean.') }
   }
 
-  if is_string($enable_ca) {
-    $_enable_ca = str2bool($enable_ca)
-  } else {
-    $_enable_ca = $enable_ca
+  case $enable_ca {
+    true, 'true':   { $enable_ca_bool = true } # lint:ignore:quoted_booleans
+    false, 'false': { $enable_ca_bool = false } # lint:ignore:quoted_booleans
+    default:        { fail('puppetserver::enable_ca is not a boolean.') }
   }
-  validate_bool($_enable_ca)
 
   if versioncmp($::puppetversion, '4.0.0') >= 0 {
-    $configdir = '/etc/puppetlabs/puppetserver/conf.d'
+    $configdir     = '/etc/puppetlabs/puppetserver/conf.d'
     $bootstrap_cfg = '/etc/puppetlabs/puppetserver/bootstrap.cfg'
   } else {
-    $configdir = '/etc/puppetserver/conf.d'
+    $configdir     = '/etc/puppetserver/conf.d'
     $bootstrap_cfg = '/etc/puppetserver/bootstrap.cfg'
   }
 
-  if $_enable_ca == true {
+  if $enable_ca_bool == true {
     $bootstrap_ca_defaults = {
       'ca.certificate-authority-service' => {
         'line'  => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
@@ -69,7 +68,7 @@ class puppetserver::config(
     }
   }
 
-  if $java_args {
+  if $java_args != undef {
     validate_hash($java_args)
     $java_args_defaults = {
       'notify' => Service[$::puppetserver::service_name],
@@ -77,7 +76,7 @@ class puppetserver::config(
     create_resources('puppetserver::config::java_arg', $java_args, $java_args_defaults)
   }
 
-  if $bootstrap_settings_real {
+  if $bootstrap_settings_real != undef {
     validate_hash($bootstrap_settings_real)
     $_bootstrap_settings = merge($bootstrap_ca_defaults, $bootstrap_settings_real)
   } else {
@@ -97,7 +96,7 @@ class puppetserver::config(
     create_resources('puppetserver::config::hocon', $puppetserver_settings_real, $puppetserver_defaults)
   }
 
-  if $webserver_settings_real {
+  if $webserver_settings_real != undef {
     validate_hash($webserver_settings_real)
     $webserver_defaults = {
       'ensure' => 'present',
