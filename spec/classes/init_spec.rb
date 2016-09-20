@@ -27,7 +27,7 @@ describe 'puppetserver' do
     end
   end
 
-  %w(installed present absent).each do |value|
+  %w(installed present absent 2.4.2).each do |value|
     describe "with package_ensure set to valid string '#{value}'" do
       let(:params) { { :package_ensure => value } }
       it { should contain_package('puppetserver').with_ensure(value) }
@@ -93,9 +93,10 @@ describe 'puppetserver' do
       },
       'regex package_ensure' => {
         :name    => %w(package_ensure),
-        :valid   => %w(installed present absent),
-        :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
+        :valid   => %w(installed present absent 2.4.2),
+        :invalid => ['string', '2.4.2.0', %w(array), { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
         :message => 'package_ensure must be one of <installed>, <present>, or <absent>',
+        :message => 'puppetserver::package_ensure must be one of <installed>, <present>, <absent>, or a semantic version number',
       },
       'regex service_ensure' => {
         :name    => %w(service_ensure),

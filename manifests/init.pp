@@ -18,7 +18,7 @@ class puppetserver (
   $webserver_settings_hiera_merge    = false,
 ) {
 
-  validate_re($package_ensure, '^(installed|present|absent)$', "puppetserver::package_ensure must be one of <installed>, <present>, or <absent> but it is set to ${package_ensure}")
+  validate_re($package_ensure, '^(installed|present|absent|(\d+)\.(\d+)\.(\d+))$', "puppetserver::package_ensure must be one of <installed>, <present>, <absent>, or a semantic version number but it is set to ${package_ensure}")
   validate_re($service_ensure, '^(running|stopped)$', "puppetserver::service_ensure must be one of <running> or <stopped> but it is set to ${service_ensure}")
   if is_string($service_name) == false { fail('puppetserver::service_name is not a string.') }
 

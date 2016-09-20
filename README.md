@@ -6,7 +6,7 @@ Puppet module to manage Puppet Server
 
 ### Dependencies
 
-* [puppetlabs-stdlib](https://forge.puppetlabs.com/puppetlabs/stdlib) (>= 4.0.0)
+* [puppetlabs-stdlib](https://forge.puppetlabs.com/puppetlabs/stdlib) (>= 4.6.0)
 * [puppetlabs-inifile](https://forge.puppetlabs.com/puppetlabs/inifile) (>= 1.1.0)
 * [puppetlabs-hocon](https://forge.puppetlabs.com/puppetlabs/hocon) (>= 0.9.0 < 1.0.0)
 
