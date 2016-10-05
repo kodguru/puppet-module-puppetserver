@@ -2,7 +2,6 @@ require 'spec_helper'
 describe 'puppetserver' do
   let(:facts) do
     {
-      :puppetversion => '3.8.0',
       :test          => nil, # used in hiera
     }
   end
@@ -72,7 +71,6 @@ describe 'puppetserver' do
     # set needed custom facts and variables
     let(:facts) do
       {
-        :puppetversion => '3.8.0',
         :test          => nil, # used in hiera
       }
     end

@@ -3,7 +3,6 @@ describe 'puppetserver::config' do
   let(:facts) do
     {
       :osfamily      => 'RedHat',
-      :puppetversion => '3.8.0',
       :test          => nil, # used in hiera
     }
   end
@@ -18,16 +17,37 @@ describe 'puppetserver::config' do
       should contain_file_line('ca.certificate-authority-service').with({
         'line'  => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
         'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-        'path'  => '/etc/puppetserver/bootstrap.cfg',
+        'path'  => '/etc/puppetlabs/puppetserver/services.d/ca.cfg',
       })
     end
     it do
       should contain_file_line('ca.certificate-authority-disabled-service').with({
         'line'  => '#puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
         'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-        'path'  => '/etc/puppetserver/bootstrap.cfg',
+        'path'  => '/etc/puppetlabs/puppetserver/services.d/ca.cfg',
       })
     end
+  end
+
+  context 'with bootstrap_cfg set to valid string </other/path/to/ca.cfg>' do
+    let(:params) { { :bootstrap_cfg => '/other/path/to/ca.cfg' } }
+
+    it { should have_file_line_resource_count(2) }
+    it { should contain_file_line('ca.certificate-authority-service').with_path('/other/path/to/ca.cfg') }
+    it { should contain_file_line('ca.certificate-authority-disabled-service').with_path('/other/path/to/ca.cfg') }
+  end
+
+  context 'with configdir set to valid string </other/path/to/conf.d> when puppetserver_settings and webserver_settings are set' do
+    let(:params) do
+      {
+        :configdir             => '/other/path/to/conf.d',
+        :puppetserver_settings => { 'jruby-puppet.max-active-instances' => { 'value' => '6' } },
+        :webserver_settings    => { 'rspec' => { 'value' => '242' } },
+      }
+    end
+
+    it { should contain_puppetserver__config__hocon('jruby-puppet.max-active-instances').with_path('/other/path/to/conf.d/puppetserver.conf') }
+    it { should contain_puppetserver__config__hocon('rspec').with_path('/other/path/to/conf.d/webserver.conf') }
   end
 
   context 'with enable_ca set to valid bool <false>' do
@@ -38,14 +58,14 @@ describe 'puppetserver::config' do
       should contain_file_line('ca.certificate-authority-service').with({
         'line'  => '#puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
         'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-        'path'  => '/etc/puppetserver/bootstrap.cfg',
+        'path'  => '/etc/puppetlabs/puppetserver/services.d/ca.cfg',
       })
     end
     it do
       should contain_file_line('ca.certificate-authority-disabled-service').with({
         'line'  => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
         'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-        'path'  => '/etc/puppetserver/bootstrap.cfg',
+        'path'  => '/etc/puppetlabs/puppetserver/services.d/ca.cfg',
       })
     end
   end
@@ -70,7 +90,7 @@ describe 'puppetserver::config' do
       should contain_file_line('rspec').with({
         'line'  => 'testing242',
         'match' => 'testing',
-        'path'  => '/etc/puppetserver/bootstrap.cfg',
+        'path'  => '/etc/puppetlabs/puppetserver/services.d/ca.cfg',
       })
     end
   end
@@ -82,7 +102,7 @@ describe 'puppetserver::config' do
     it do
       should contain_puppetserver__config__hocon('jruby-puppet.max-active-instances').with({
         'ensure' => 'present',
-        'path'   => '/etc/puppetserver/conf.d/puppetserver.conf',
+        'path'   => '/etc/puppetlabs/puppetserver/conf.d/puppetserver.conf',
         'value'  => '6',
       })
     end
@@ -95,7 +115,7 @@ describe 'puppetserver::config' do
     it do
       should contain_puppetserver__config__hocon('rspec').with({
         'ensure' => 'present',
-        'path'   => '/etc/puppetserver/conf.d/webserver.conf',
+        'path'   => '/etc/puppetlabs/puppetserver/conf.d/webserver.conf',
         'value'  => '242',
       })
     end
@@ -106,7 +126,6 @@ describe 'puppetserver::config' do
       {
         :fqdn          => 'all_settings',
         :test          => 'all_settings',
-        :puppetversion => '3.8.0',
       }
     end
 
@@ -152,13 +171,18 @@ describe 'puppetserver::config' do
     let(:facts) do
       {
         :osfamily      => 'RedHat',
-        :puppetversion => '3.8.0',
         :test          => nil, # used in hiera
       }
     end
     let(:mandatory_params) { {} }
 
     validations = {
+      'absolute_path' => {
+        :name    => %w(bootstrap_cfg configdir),
+        :valid   => %w(/absolute/filepath /absolute/directory/),
+        :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
+        :message => 'is not an absolute path',
+      },
       'boolean/stringified' => {
         :name    => %w(enable_ca bootstrap_settings_hiera_merge puppetserver_settings_hiera_merge webserver_settings_hiera_merge),
         :valid   => [true, 'true', false, 'false'],

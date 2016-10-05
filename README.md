@@ -123,6 +123,16 @@ Default: `false`
 
 Internal class to do puppetserver configuration.
 
+#### `bootstrap_cfg`
+String to specify the path and filename to the bootstrapping configuration file. The default value is valid for puppetserver >= 2.5.0.
+
+Default: `/etc/puppetlabs/puppetserver/services.d/ca.cfg`
+
+#### `configdir`
+String to specify the path to puppetservers configuration files and settings directory. The default value is valid for puppetserver >= 2.5.0.
+
+Default: `/etc/puppetlabs/puppetserver/conf.d`
+
 #### `enable_ca`
 Boolean to control if the CA service should be enabled.
 
