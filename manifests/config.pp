@@ -1,5 +1,7 @@
 #
 class puppetserver::config(
+  $bootstrap_cfg                     = '/etc/puppetlabs/puppetserver/services.d/ca.cfg',
+  $configdir                         = '/etc/puppetlabs/puppetserver/conf.d',
   $enable_ca                         = $::puppetserver::enable_ca,
   $java_args                         = $::puppetserver::java_args,
   $bootstrap_settings                = $::puppetserver::bootstrap_settings,
@@ -36,34 +38,34 @@ class puppetserver::config(
     default:        { fail('puppetserver::enable_ca is not a boolean.') }
   }
 
-  if versioncmp($::puppetversion, '4.0.0') >= 0 {
-    $configdir     = '/etc/puppetlabs/puppetserver/conf.d'
-    $bootstrap_cfg = '/etc/puppetlabs/puppetserver/bootstrap.cfg'
-  } else {
-    $configdir     = '/etc/puppetserver/conf.d'
-    $bootstrap_cfg = '/etc/puppetserver/bootstrap.cfg'
-  }
+  $_ca_service = 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service'
+  $_ca_disable = 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service'
+
+  validate_absolute_path(
+    $bootstrap_cfg,
+    $configdir,
+  )
 
   if $enable_ca_bool == true {
     $bootstrap_ca_defaults = {
       'ca.certificate-authority-service' => {
-        'line'  => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
+        'line'  => $_ca_service,
+        'match' => $_ca_service,
       },
       'ca.certificate-authority-disabled-service' => {
-        'line'  => '#puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
+        'line'  => "#${_ca_disable}",
+        'match' => $_ca_disable,
       },
     }
   } else {
     $bootstrap_ca_defaults = {
       'ca.certificate-authority-service' => {
-        'line'  => '#puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
+        'line'  => "#${_ca_service}",
+        'match' => $_ca_service,
       },
       'ca.certificate-authority-disabled-service' => {
-        'line'  => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
+        'line'  => $_ca_disable,
+        'match' => $_ca_disable,
       },
     }
   }
