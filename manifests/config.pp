@@ -44,26 +44,29 @@ class puppetserver::config(
     $bootstrap_cfg = '/etc/puppetserver/bootstrap.cfg'
   }
 
+  $_ca_service = 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service'
+  $_ca_disable = 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service'
+
   if $enable_ca_bool == true {
     $bootstrap_ca_defaults = {
       'ca.certificate-authority-service' => {
-        'line'  => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
+        'line'  => $_ca_service,
+        'match' => $_ca_service,
       },
       'ca.certificate-authority-disabled-service' => {
-        'line'  => '#puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
+        'line'  => "#${_ca_disable}",
+        'match' => $_ca_disable,
       },
     }
   } else {
     $bootstrap_ca_defaults = {
       'ca.certificate-authority-service' => {
-        'line'  => '#puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
+        'line'  => "#${_ca_service}",
+        'match' => $_ca_service,
       },
       'ca.certificate-authority-disabled-service' => {
-        'line'  => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
-        'match' => 'puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service',
+        'line'  => $_ca_disable,
+        'match' => $_ca_disable,
       },
     }
   }
