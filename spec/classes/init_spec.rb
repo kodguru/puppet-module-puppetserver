@@ -1,10 +1,9 @@
 require 'spec_helper'
 describe 'puppetserver' do
-  let(:facts) do
-    {
-      :test          => nil, # used in hiera
-    }
-  end
+  mandatory_params = {}
+
+  let(:facts) { mandatory_global_facts }
+  let(:params) { mandatory_params }
 
   describe 'with defaults for all parameters' do
     it { should compile.with_all_deps }
@@ -28,39 +27,39 @@ describe 'puppetserver' do
 
   %w(installed present absent 2.4.2).each do |value|
     describe "with package_ensure set to valid string '#{value}'" do
-      let(:params) { { :package_ensure => value } }
+      let(:params) { mandatory_params.merge({ :package_ensure => value }) }
       it { should contain_package('puppetserver').with_ensure(value) }
     end
   end
 
   describe 'with package_name set to valid string \'puppetserver_new\'' do
-    let(:params) { { :package_name => 'puppetserver_new' } }
+    let(:params) { mandatory_params.merge({ :package_name => 'puppetserver_new' }) }
     it { should compile.with_all_deps }
     it { should contain_package('puppetserver_new') }
   end
 
   describe 'with package_name set to valid array [\'pkg1\',\'pkg2\']' do
-    let(:params) { { :package_name => %w(pkg1 pkg2) } }
+    let(:params) { mandatory_params.merge({ :package_name => %w(pkg1 pkg2) }) }
     it { should compile.with_all_deps }
     it { should contain_package('pkg1') }
     it { should contain_package('pkg2') }
   end
 
   describe 'with service_enable set to valid bool <false>' do
-    let(:params) { { :service_enable => false } }
+    let(:params) { mandatory_params.merge({ :service_enable => false }) }
     it { should compile.with_all_deps }
     it { should contain_service('puppetserver').with_enable(false) }
   end
 
   %w(running stopped).each do |value|
     describe "with service_ensure set to valid string '#{value}'" do
-      let(:params) { { :service_ensure => value } }
+      let(:params) { mandatory_params.merge({ :service_ensure => value }) }
       it { should contain_service('puppetserver').with_ensure(value) }
     end
   end
 
   describe 'with service_name set to valid string \'puppetsrv\'' do
-    let(:params) { { :service_name => 'puppetsrv' } }
+    let(:params) { mandatory_params.merge({ :service_name => 'puppetsrv' }) }
     it { should compile.with_all_deps }
     it { should contain_service('puppetsrv') }
     it { should contain_class('puppetserver::config').with_notify(['Service[puppetsrv]']) }
@@ -68,14 +67,6 @@ describe 'puppetserver' do
   end
 
   describe 'variable type and content validations' do
-    # set needed custom facts and variables
-    let(:facts) do
-      {
-        :test          => nil, # used in hiera
-      }
-    end
-    let(:mandatory_params) { {} }
-
     validations = {
       'array/string' => {
         :name    => %w(package_name),

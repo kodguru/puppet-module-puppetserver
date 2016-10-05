@@ -1,11 +1,9 @@
 require 'spec_helper'
 describe 'puppetserver::config' do
-  let(:facts) do
-    {
-      :osfamily      => 'RedHat',
-      :test          => nil, # used in hiera
-    }
-  end
+  mandatory_params = {}
+
+  let(:facts) { mandatory_global_facts }
+  let(:params) { mandatory_params }
 
   context 'with defaults for all parameters' do
     it { should compile.with_all_deps }
@@ -30,8 +28,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with bootstrap_cfg set to valid string </other/path/to/ca.cfg>' do
-    let(:params) { { :bootstrap_cfg => '/other/path/to/ca.cfg' } }
-
+    let(:params) { mandatory_params.merge({ :bootstrap_cfg => '/other/path/to/ca.cfg' }) }
     it { should have_file_line_resource_count(2) }
     it { should contain_file_line('ca.certificate-authority-service').with_path('/other/path/to/ca.cfg') }
     it { should contain_file_line('ca.certificate-authority-disabled-service').with_path('/other/path/to/ca.cfg') }
@@ -39,20 +36,18 @@ describe 'puppetserver::config' do
 
   context 'with configdir set to valid string </other/path/to/conf.d> when puppetserver_settings and webserver_settings are set' do
     let(:params) do
-      {
+      mandatory_params.merge({
         :configdir             => '/other/path/to/conf.d',
         :puppetserver_settings => { 'jruby-puppet.max-active-instances' => { 'value' => '6' } },
         :webserver_settings    => { 'rspec' => { 'value' => '242' } },
-      }
+      })
     end
-
     it { should contain_puppetserver__config__hocon('jruby-puppet.max-active-instances').with_path('/other/path/to/conf.d/puppetserver.conf') }
     it { should contain_puppetserver__config__hocon('rspec').with_path('/other/path/to/conf.d/webserver.conf') }
   end
 
   context 'with enable_ca set to valid bool <false>' do
-    let(:params) { { :enable_ca => false } }
-
+    let(:params) { mandatory_params.merge({ :enable_ca => false }) }
     it { should have_file_line_resource_count(2) }
     it do
       should contain_file_line('ca.certificate-authority-service').with({
@@ -71,8 +66,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with java_args set to valid hash' do
-    let(:params) { { :java_args => { 'rspec' => { 'value' => 'value' } } } }
-
+    let(:params) { mandatory_params.merge({ :java_args => { 'rspec' => { 'value' => 'value' } } }) }
     it { should have_puppetserver__config__java_arg_resource_count(1) }
     it do
       should contain_puppetserver__config__java_arg('rspec').with({
@@ -83,8 +77,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with bootstrap_settings set to valid hash' do
-    let(:params) { { :bootstrap_settings => { 'rspec' => { 'line' => 'testing242', 'match' => 'testing' } } } }
-
+    let(:params) { mandatory_params.merge({ :bootstrap_settings => { 'rspec' => { 'line' => 'testing242', 'match' => 'testing' } } }) }
     it { should have_file_line_resource_count(3) }
     it do
       should contain_file_line('rspec').with({
@@ -96,8 +89,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with puppetserver_settings set to valid hash' do
-    let(:params) { { :puppetserver_settings => { 'jruby-puppet.max-active-instances' => { 'value' => '6' } } } }
-
+    let(:params) { mandatory_params.merge({ :puppetserver_settings => { 'jruby-puppet.max-active-instances' => { 'value' => '6' } } }) }
     it { should have_puppetserver__config__hocon_resource_count(1) }
     it do
       should contain_puppetserver__config__hocon('jruby-puppet.max-active-instances').with({
@@ -109,8 +101,7 @@ describe 'puppetserver::config' do
   end
 
   context 'with webserver_settings set to valid hash' do
-    let(:params) { { :webserver_settings => { 'rspec' => { 'value' => '242' } } } }
-
+    let(:params) { mandatory_params.merge({ :webserver_settings => { 'rspec' => { 'value' => '242' } } }) }
     it { should have_puppetserver__config__hocon_resource_count(1) }
     it do
       should contain_puppetserver__config__hocon('rspec').with({
@@ -141,7 +132,7 @@ describe 'puppetserver::config' do
     end
 
     context 'with bootstrap_settings_hiera_merge set to valid <true>' do
-      let(:params) { { :bootstrap_settings_hiera_merge => true } }
+      let(:params) { mandatory_params.merge({ :bootstrap_settings_hiera_merge => true }) }
       it { should have_file_line_resource_count(4) }
       it { should contain_file_line('ca.certificate-authority-service') }
       it { should contain_file_line('ca.certificate-authority-disabled-service') }
@@ -150,16 +141,14 @@ describe 'puppetserver::config' do
     end
 
     context 'with puppetserver_settings_hiera_merge set to valid <true>' do
-      let(:params) { { :puppetserver_settings_hiera_merge => true } }
-
+      let(:params) { mandatory_params.merge({ :puppetserver_settings_hiera_merge => true }) }
       it { should have_puppetserver__config__hocon_resource_count(3) }
       it { should contain_puppetserver__config__hocon('puppetserver_settings_from_hiera_fqdn') }
       it { should contain_puppetserver__config__hocon('puppetserver_settings_from_hiera_test') }
     end
 
     context 'with webserver_settings_hiera_merge set to valid <true>' do
-      let(:params) { { :webserver_settings_hiera_merge => true } }
-
+      let(:params) { mandatory_params.merge({ :webserver_settings_hiera_merge => true }) }
       it { should have_puppetserver__config__hocon_resource_count(3) }
       it { should contain_puppetserver__config__hocon('webserver_settings_from_hiera_fqdn') }
       it { should contain_puppetserver__config__hocon('webserver_settings_from_hiera_test') }
@@ -167,15 +156,6 @@ describe 'puppetserver::config' do
   end
 
   describe 'variable type and content validations' do
-    # set needed custom facts and variables
-    let(:facts) do
-      {
-        :osfamily      => 'RedHat',
-        :test          => nil, # used in hiera
-      }
-    end
-    let(:mandatory_params) { {} }
-
     validations = {
       'absolute_path' => {
         :name    => %w(bootstrap_cfg configdir),
