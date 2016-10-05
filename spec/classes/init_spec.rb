@@ -95,7 +95,6 @@ describe 'puppetserver' do
         :name    => %w(package_ensure),
         :valid   => %w(installed present absent 2.4.2),
         :invalid => ['string', '2.4.2.0', %w(array), { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
-        :message => 'package_ensure must be one of <installed>, <present>, or <absent>',
         :message => 'puppetserver::package_ensure must be one of <installed>, <present>, <absent>, or a semantic version number',
       },
       'regex service_ensure' => {
