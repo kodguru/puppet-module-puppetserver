@@ -1,6 +1,6 @@
 {
   "name": "PhilFriderici-puppetserver",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Phil-Friderici",
   "summary": "Manage Puppet Server",
   "license": "Apache-2.0",
