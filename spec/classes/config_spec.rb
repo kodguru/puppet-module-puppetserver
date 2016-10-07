@@ -8,9 +8,27 @@ describe 'puppetserver::config' do
   context 'with defaults for all parameters' do
     it { should compile.with_all_deps }
     it { should contain_class('puppetserver::config') }
-    it { should have_file_line_resource_count(2) }
-    it { should have_puppetserver__config__java_arg_resource_count(0) }
+    it { should contain_file('/var/lib/puppet').with_ensure('directory') }
+    it do
+      should contain_file('/var/lib/puppet/tmp').with(
+        'ensure'  => 'directory',
+        'owner'   => 'puppet',
+        'group'   => 'puppet',
+        'mode'    => '0755',
+        'require' => 'File[/var/lib/puppet]'
+      )
+    end
+
+    it { should have_puppetserver__config__java_arg_resource_count(1) }
+    it do
+      should contain_puppetserver__config__java_arg('-D').with({
+        'value'  => 'java.io.tmpdir=/var/lib/puppet/tmp',
+        'notify' => 'Service[puppetserver]',
+      })
+    end
     it { should have_puppetserver__config__hocon_resource_count(0) }
+
+    it { should have_file_line_resource_count(2) }
     it do
       should contain_file_line('ca.certificate-authority-service').with({
         'line'  => 'puppetlabs.services.ca.certificate-authority-service/certificate-authority-service',
@@ -65,12 +83,25 @@ describe 'puppetserver::config' do
     end
   end
 
+  context 'with enable_tmpfix set to valid bool <false>' do
+    let(:params) { mandatory_params.merge({ :enable_tmpfix => false }) }
+    it { should have_puppetserver__config__java_arg_resource_count(0) }
+    it { should_not contain_file('/var/lib/puppet') }
+    it { should_not contain_file('/var/lib/puppet/tmp') }
+  end
+
   context 'with java_args set to valid hash' do
     let(:params) { mandatory_params.merge({ :java_args => { 'rspec' => { 'value' => 'value' } } }) }
-    it { should have_puppetserver__config__java_arg_resource_count(1) }
+    it { should have_puppetserver__config__java_arg_resource_count(2) }
     it do
       should contain_puppetserver__config__java_arg('rspec').with({
         'value'  => 'value',
+        'notify' => 'Service[puppetserver]',
+      })
+    end
+    it do
+      should contain_puppetserver__config__java_arg('-D').with({
+        'value'  => 'java.io.tmpdir=/var/lib/puppet/tmp',
         'notify' => 'Service[puppetserver]',
       })
     end
@@ -114,10 +145,10 @@ describe 'puppetserver::config' do
 
   describe 'with hiera providing data from multiple levels' do
     let(:facts) do
-      {
+      mandatory_global_facts.merge({
         :fqdn          => 'all_settings',
         :test          => 'all_settings',
-      }
+      })
     end
 
     context 'with defaults for all parameters' do
@@ -164,10 +195,10 @@ describe 'puppetserver::config' do
         :message => 'is not an absolute path',
       },
       'boolean/stringified' => {
-        :name    => %w(enable_ca bootstrap_settings_hiera_merge puppetserver_settings_hiera_merge webserver_settings_hiera_merge),
+        :name    => %w(enable_ca enable_tmpfix bootstrap_settings_hiera_merge puppetserver_settings_hiera_merge webserver_settings_hiera_merge),
         :valid   => [true, 'true', false, 'false'],
         :invalid => ['string', %w(array), { 'ha' => 'sh' }, 3, 2.42, nil],
-        :message => '(Unknown type of boolean given|is not a boolean)',
+        :message => '(is not a boolean|Requires( either)? string to work with|Unknown type of boolean given)',
       },
       'hash' => {
         :name    => %w(bootstrap_settings java_args puppetserver_settings webserver_settings),

@@ -9,7 +9,7 @@ class puppetserver (
   $service_enable                    = true,
   $service_ensure                    = 'running',
   $service_name                      = 'puppetserver',
-  $java_args                         = undef,
+  $java_args                         = {},
   $bootstrap_settings                = undef,
   $bootstrap_settings_hiera_merge    = false,
   $puppetserver_settings             = undef,

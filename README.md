@@ -138,6 +138,13 @@ Boolean to control if the CA service should be enabled.
 
 Default: `$::puppetserver::enable_ca`
 
+#### `enable_tmpfix`
+Boolean to control if the workaround for /tmp being mounted with noexec should get applied.
+When active /var/lib/puppet/tmp will be created and used as temporary directory for puppetserver.
+This implements the workaround described here: https://gist.github.com/csschwe/cbdd36e27ee708aba441#gistcomment-1336281
+
+Default: `true`
+
 #### `java_args`
 Hash with Java arguments to set for puppetserver. `puppetserver::config::java_arg` resources are created from hash.
 
